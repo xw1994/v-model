@@ -1,1 +1,14 @@
-# v-model
+之前看了一个大神的手写的vue双向绑定的代码，在明白原理之后自己也动手实践了一下，最终也实现了其功能，虽然代码写的可能比较烂。
+vue双向绑定主要分为三大主要部分
+1.init初始化
+  这一个过程是初始化vue实例传过来的参数值，data,methods以及根元素，并且把这些挂在实例对象上
+2.observe函数
+  这个函数通过深度遍历data对象并且对该对象的每个自有属性进行get和set操作，get操作获取最新的属性值，set操作除了赋值为新的值，而且调用实例对象上存储的_item_updator对应该属性的watcher实例上的updator函数，进行dom更新操作
+3.compile函数
+  这个函数就是看名字就是用来遍历根dom元素下的子节点，对于每个dom元素上对应的v-开头指令进行解析和编译，v-model属性对应的input和textarea元素除了初始化将该元素的value值赋值为v-model属性对应的值之外，还监听keyup事件，将data值更新，并且往_item_updator
+  对象上push进对应的v-model对应的值作为打他key值的watcher实例，以便data里面的属性值更新时进行dom更新，还有v-on:click和v-bind就不一一详述了
+4.watcher构造函数
+  watcher构造函数很简单，主要是传入dom更新的元素，元素属性值进行初始化。另外还有个update 函数主要是用于set操作触发时dom更新操作
+例子写的很简单。。。
+
+

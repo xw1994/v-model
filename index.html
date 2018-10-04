@@ -1,0 +1,117 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+    <body>
+        <div id="app">
+            <input type="text" v-model="number"/><button v-on:click="addData">点击增加</button>
+            <span v-bind="number"></span>
+        </div>
+<script>
+    // 定义一个myVue构造函数
+    function myVue(options){
+     this._init(options);
+     this._observe();
+     this._compileDirective(this.rootElement);
+    }
+    function Watcher(element,attr,key,value){
+      this.element = element;
+      this.attr = attr;
+      this.key = key;
+    }
+    Watcher.prototype.update=function(value){
+        this.element[this.attr] = value;
+
+    }
+    myVue.prototype._init = function(options){
+        this.data = options.data;
+        this.methods = options.methods;
+        this.rootElement = document.getElementById('app');
+        this._binding_updator = {};
+    }
+    myVue.prototype._observe = function(){
+        var data = this.data;
+        var bValue;
+        var that = this;
+        // let observeData = data;
+        // if(typeof data ==='function'){
+        //     observeData = data();
+        // }
+        for (var i in data){
+            if(typeof(data[i]) === 'object'){
+                this._observe(data[i])
+            } else {
+                bValue = data[i];
+                Object.defineProperty(data,i,{
+                    enumerable:true,
+                    configurable:true,
+                    get:function(){
+                        // console.log('val',value);
+                        return bValue;
+                    },
+                    set:function(newVal){
+                       bValue = newVal;
+                       that._binding_updator[i].forEach(item =>{
+                           item.update(newVal)
+                       })
+                    }
+                })
+            }
+     }
+}
+   myVue.prototype._compileDirective = function(element){
+       var childNodes = element.childNodes;
+       var _this = this;
+       for(var i =0;i<childNodes.length; i++){
+           var subChildNode = childNodes[i];
+           // 对不同的指令类型和元素进行相应的解析
+           if(subChildNode.getAttribute && subChildNode.getAttribute("v-model") && (subChildNode.nodeName === "INPUT" || subChildNode.nodeName === "TEXTAREA")){
+               var key = subChildNode.getAttribute("v-model");
+               subChildNode.value = this.data[key];
+               subChildNode.onkeyup = function(event){
+                 var value = event.target.value;
+                 _this.data[key] = value;
+               };
+               if(this._binding_updator[key] && this._binding_updator[key].length > 0){
+                this._binding_updator[key].push(new Watcher(subChildNode,"value"));
+               } else {
+                this._binding_updator[key] = [new Watcher(subChildNode,"value")];
+               }
+           }
+           if(subChildNode.getAttribute && subChildNode.getAttribute("v-on:click")){
+             var methodName = subChildNode.getAttribute("v-on:click");
+             subChildNode.onclick =function(){
+                 return _this.methods[methodName].apply(_this.data);
+             };
+           }
+           if(subChildNode.getAttribute && subChildNode.getAttribute('v-bind')){
+            var bindKey = subChildNode.getAttribute('v-bind');
+            subChildNode.innerHTML = this.data[bindKey];
+            if(this._binding_updator[bindKey] && this._binding_updator[bindKey].length > 0){
+                this._binding_updator[bindKey].push(new Watcher(subChildNode,"innerHTML"));
+                console.log('_binding_updators',this._binding_updator,this._binding_updator[bindKey]);
+               } else {
+                console.log('_binding_updatorss',this._binding_updator,this._binding_updator[bindKey]);
+                this._binding_updator[bindKey] = [new Watcher(subChildNode,"innerHTML")];
+               }
+           }
+           if(subChildNode.childNodes.length > 0){
+               this._compileDirective(subChildNode);
+           }
+       }
+   }
+    const app = new myVue({
+        id:"#app", //根结点
+        data:{
+            number:1
+        },
+        methods:{
+            addData:function(){
+                this.number = Number(this.number) +1;
+            }
+        }
+    })
+</script>
+</body>
+</html>
